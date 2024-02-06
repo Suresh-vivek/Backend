@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { asyncHandler } from "../utils/asynHandler";
 
 const subscriptionSchema = new mongoose.Scheema(
   {
@@ -13,5 +14,6 @@ const subscriptionSchema = new mongoose.Scheema(
   },
   { timestamps: true }
 );
+
 
 const Subscription = mongoose.model("Subscription", subscriptionSchema);
