@@ -1,19 +1,17 @@
 import mongoose from "mongoose";
-import { asyncHandler } from "../utils/asynHandler";
 
-const subscriptionSchema = new mongoose.Scheema(
+const subscriptionSchema = new mongoose.Schema(
   {
     subscriber: {
       type: mongoose.Schema.Types.ObjectId, // one who is subscribing
       ref: "User",
     },
     channel: {
-      type: mongoose.Schema.Types.ObjectId, // channel is also a user 
-      ref: "User", // one to whom subscriber is subscribing 
+      type: mongoose.Schema.Types.ObjectId, // channel is also a user
+      ref: "User", // one to whom subscriber is subscribing
     },
   },
   { timestamps: true }
 );
-
 
 const Subscription = mongoose.model("Subscription", subscriptionSchema);

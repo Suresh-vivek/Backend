@@ -10,6 +10,13 @@ import jwt from "jsonwebtoken";
 import { deleteImageonCloudinary } from "../utils/deleteImageonCloudinary.js";
 import mongoose from "mongoose";
 
+const getPublicId = (url) => {
+  const parts = url.split("/");
+  const lastPart = parts[parts.length - 1];
+  const publicId = lastPart.split(".")[0];
+  return publicId;
+};
+
 const generateAccessAndRefreshToken = async (userId) => {
   try {
     const user = await User.findById(userId);
@@ -190,8 +197,8 @@ const logOutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unset: {
+        refreshToken: 1,
       },
     },
     {
@@ -287,7 +294,7 @@ const changeCurrentUserPassword = asyncHandler(async (req, res) => {
   const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
 
   if (!isPasswordCorrect) {
-    throw new ApiError(401, "Invalid Password");
+    throw new ApiError(401, "Invalid old Password");
   }
 
   user.password = newPassword; // before saving the password save hook will runn and encrypt the password
@@ -336,7 +343,17 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 const updateUserAvatar = asyncHandler(async (req, res) => {
   // here we use multer middleware and get req.files
   const avatarLoacalPath = req.file?.path;
-  const oldImageUrl = req.user?.avatar.public_id;
+  //console.log(req.user);
+
+  const oldAvatarUrl = req.user?.avatar;
+  // Split the URL by '/'
+  //const parts = oldAvatarUrl.split("/");
+  // Get the last part (which contains the public_id and the file extension)
+  //const lastPart = parts[parts.length - 1];
+  //const publicId = lastPart.split(".")[0];
+
+  const publicId = getPublicId(oldAvatarUrl);
+  console.log(publicId);
 
   if (!avatarLoacalPath) {
     throw new ApiError(400, "Avatar file is required");
@@ -359,7 +376,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     { new: true }
   ).select("-password");
 
-  deleteImageonCloudinary(oldImageUrl);
+  deleteImageonCloudinary(publicId);
 
   // we can also delete the avatar from the cloudinary
   // we can use cloudinary.uploader.destroy(public_id, options, callback) to delete the image from cloudinary
@@ -372,6 +389,9 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 const updateUserCoverImage = asyncHandler(async (req, res) => {
   // here we use multer middleware and get req.files
   const coverImageLoacalPath = req.file?.path;
+  const oldCoverImageUrl = req.user?.coverImage;
+  const publicId = getPublicId(oldCoverImageUrl);
+  console.log(publicId);
 
   if (!coverImageLoacalPath) {
     throw new ApiError(400, "Cover Image file is required");
@@ -391,12 +411,13 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
         coverImage: coverImage.url,
       },
     },
-    { mew: true }
+    { new: true }
   ).select("-password");
+  deleteImageonCloudinary(publicId);
 
   return res
     .status(200)
-    .json(new ApiResponse(200, user, "Avatar Updated Successfully"));
+    .json(new ApiResponse(200, user, "Cover Image Updated Successfully"));
 });
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
